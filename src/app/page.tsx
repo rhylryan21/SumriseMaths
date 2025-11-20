@@ -12,6 +12,7 @@ return (
 <div className="flex gap-3 justify-center">
 <Link href="/demo" className="px-5 py-3 rounded-2xl bg-black text-white">Try a demo</Link>
 <Link href="#" className="px-5 py-3 rounded-2xl border">For teachers</Link>
+    <Link href="/practice" className="px-5 py-3 rounded-2xl border">Practice</Link>
 </div>
 <p className="text-sm text-gray-400">© {new Date().getFullYear()} Sumrise Maths</p>
 </div>
