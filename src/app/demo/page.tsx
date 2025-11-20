@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 
 type EvaluateResponse =
   | { ok: true; value: number }
-  | { ok: false; error?: string }
+  | { ok: false; feedback?: string }
 
 const API_URL = process.env.NEXT_PUBLIC_GRADING_URL ?? 'http://127.0.0.1:8001'
 const ALLOWED = /^[0-9\s+\-*/^().]{1,100}$/
@@ -35,7 +35,7 @@ export default function DemoPage() {
         setResult(val)
         setLastGood(val)
       } else {
-        setError(json.error ?? 'Unknown error')
+        setError(json.feedback ?? 'Unknown error')
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Network error')
