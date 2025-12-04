@@ -54,6 +54,22 @@ export default function PracticePage() {
     setIdx((i) => (i + 1) % questions.length)
   }
 
+  const [loadError, setLoadError] = useState<string>('')
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${API_URL}/questions`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = (await res.json()) as Question[]
+        setQuestions(data)
+      } catch (e) {
+        setLoadError(e instanceof Error ? e.message : 'Network error')
+      }
+    }
+    load()
+  }, [])
+
   return (
     <main className="min-h-screen p-8">
       <div className="mx-auto max-w-2xl space-y-4">
@@ -101,6 +117,12 @@ export default function PracticePage() {
                 </ol>
               </div>
             ) : null}
+
+            {loadError && (
+              <div className="rounded border border-red-500 p-3 text-red-700">
+                Failed to load questions: {loadError}
+              </div>
+            )}
 
             <div className="flex gap-2">
               <button
