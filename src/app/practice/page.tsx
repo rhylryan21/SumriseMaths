@@ -2,7 +2,15 @@
 import { useEffect, useState } from 'react'
 
 type Question = { id: string; topic: string; prompt: string; type: string }
-type MarkResponse = { ok: boolean; correct: boolean; score: number; feedback: string; expected?: number }
+type MarkResponse = {
+  ok: boolean
+  correct: boolean
+  score: number
+  feedback: string
+  expected?: number
+  expected_str?: string
+  steps?: string[]
+}
 
 const API_URL = process.env.NEXT_PUBLIC_GRADING_URL ?? 'http://127.0.0.1:8001'
 
@@ -31,7 +39,7 @@ export default function PracticePage() {
       const res = await fetch(`${API_URL}/mark`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: q.id, answer })
+        body: JSON.stringify({ id: q.id, answer }),
       })
       const data: MarkResponse = await res.json()
       setMark(data)
@@ -48,7 +56,7 @@ export default function PracticePage() {
 
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-3xl font-bold">Practice</h1>
 
         {!q && <div>Loading questions…</div>}
@@ -59,13 +67,13 @@ export default function PracticePage() {
             <div className="text-lg">{q.prompt}</div>
             <div className="flex gap-2">
               <input
-                className="border rounded p-2 flex-1"
+                className="flex-1 rounded border p-2"
                 placeholder="Your answer"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
               />
               <button
-                className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+                className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
                 disabled={loading || !answer.trim()}
                 onClick={submit}
               >
@@ -74,16 +82,29 @@ export default function PracticePage() {
             </div>
 
             {mark && (
-              <div className={`p-3 rounded border ${mark.correct ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'}`}>
-                {mark.feedback} {mark.ok && typeof mark.expected === 'number' && !mark.correct && (
+              <div
+                className={`rounded border p-3 ${mark.correct ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'}`}
+              >
+                {mark.feedback}{' '}
+                {mark.ok && typeof mark.expected === 'number' && !mark.correct && (
                   <span className="text-gray-500"> (Expected ≈ {mark.expected})</span>
                 )}
               </div>
             )}
+            {mark?.steps?.length ? (
+              <div className="rounded border p-3">
+                <div className="mb-1 font-medium">Worked steps</div>
+                <ol className="ml-5 list-decimal space-y-1">
+                  {mark.steps.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
 
             <div className="flex gap-2">
               <button
-                className="px-4 py-2 rounded border"
+                className="rounded border px-4 py-2"
                 onClick={next}
                 disabled={!questions.length}
               >

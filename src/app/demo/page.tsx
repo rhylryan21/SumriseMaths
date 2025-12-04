@@ -1,17 +1,15 @@
 'use client'
 import { useState, useMemo } from 'react'
 
-type EvaluateResponse =
-  | { ok: true; value: number }
-  | { ok: false; feedback?: string }
+type EvaluateResponse = { ok: true; value: number } | { ok: false; feedback?: string }
 
 const API_URL = process.env.NEXT_PUBLIC_GRADING_URL ?? 'http://127.0.0.1:8001'
 const ALLOWED = /^[0-9\s+\-*/^().]{1,100}$/
 
 export default function DemoPage() {
   const [expr, setExpr] = useState('3^2 + 4^2')
-  const [result, setResult] = useState<string>('')        // current attempt
-  const [lastGood, setLastGood] = useState<string>('')    // persists last success
+  const [result, setResult] = useState<string>('') // current attempt
+  const [lastGood, setLastGood] = useState<string>('') // persists last success
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
 
@@ -22,12 +20,14 @@ export default function DemoPage() {
   }, [expr])
 
   const callApi = async () => {
-    setLoading(true); setError(''); setResult('')
+    setLoading(true)
+    setError('')
+    setResult('')
     try {
       const res = await fetch(`${API_URL}/evaluate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expr })
+        body: JSON.stringify({ expr }),
       })
       const json: EvaluateResponse = await res.json()
       if (json.ok) {
@@ -46,7 +46,7 @@ export default function DemoPage() {
 
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-3xl font-bold">Sumrise Maths · Demo</h1>
         <p className="text-sm text-gray-600">
           Tip: <code>^</code> means power here (e.g., <code>3^2</code>).
@@ -54,14 +54,14 @@ export default function DemoPage() {
 
         <div className="flex gap-2">
           <input
-            className="border rounded p-2 flex-1"
+            className="flex-1 rounded border p-2"
             value={expr}
             onChange={(e) => setExpr(e.target.value)}
             placeholder="Enter expression (e.g., 3^2 + 4^2)"
           />
           <button
             onClick={callApi}
-            className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+            className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
             disabled={loading || !!clientSideHint}
           >
             {loading ? 'Working…' : 'Evaluate'}
@@ -69,17 +69,15 @@ export default function DemoPage() {
         </div>
 
         {clientSideHint && (
-          <div className="text-sm text-amber-700 border border-amber-300 bg-amber-50 rounded p-2">
+          <div className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-700">
             {clientSideHint}
           </div>
         )}
 
-        {result && <div className="p-3 rounded border">Result: {result}</div>}
+        {result && <div className="rounded border p-3">Result: {result}</div>}
 
         {error && (
-          <div className="p-3 rounded border border-red-500 text-red-700">
-            Error: {error}
-          </div>
+          <div className="rounded border border-red-500 p-3 text-red-700">Error: {error}</div>
         )}
 
         {lastGood && !result && !error && (
