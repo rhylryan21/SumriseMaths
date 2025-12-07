@@ -22,6 +22,7 @@ const API_URL = process.env.NEXT_PUBLIC_GRADING_URL ?? 'http://127.0.0.1:8001'
 
 export default function SetPage() {
   const [questions, setQuestions] = useState<Question[]>([])
+  const [allQuestions, setAllQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [result, setResult] = useState<BatchResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -34,6 +35,7 @@ export default function SetPage() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = (await res.json()) as Question[]
         setQuestions(data)
+        setAllQuestions(data)
       } catch (e) {
         setLoadError(e instanceof Error ? e.message : 'Network error')
       }
@@ -75,6 +77,21 @@ export default function SetPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const retryIncorrect = () => {
+    if (!result) return
+    const incorrectIds = result.results.filter((r) => !r.response.correct).map((r) => r.id)
+    const filtered = allQuestions.filter((q) => incorrectIds.includes(q.id))
+    setQuestions(filtered)
+    setAnswers({})
+    setResult(null)
+  }
+
+  const resetSet = () => {
+    setQuestions(allQuestions)
+    setAnswers({})
+    setResult(null)
   }
 
   return (
@@ -185,6 +202,33 @@ export default function SetPage() {
             <div style={{ fontSize: 14, color: '#374151' }}>
               Score: <span style={{ fontWeight: 600 }}>{result.correct}</span> / {result.total}
             </div>
+          )}
+          {result && result.total > result.correct && (
+            <button
+              onClick={retryIncorrect}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: '1px solid #e5e7eb',
+                background: '#fff',
+              }}
+            >
+              Retry incorrect
+            </button>
+          )}
+
+          {questions.length !== allQuestions.length && (
+            <button
+              onClick={resetSet}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: '1px solid #e5e7eb',
+                background: '#fff',
+              }}
+            >
+              Reset set
+            </button>
           )}
         </div>
       </div>
