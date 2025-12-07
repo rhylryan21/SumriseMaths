@@ -27,6 +27,7 @@ export default function SetPage() {
   const [result, setResult] = useState<BatchResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [count, setCount] = useState<number>(5)
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +37,7 @@ export default function SetPage() {
         const data = (await res.json()) as Question[]
         setQuestions(data)
         setAllQuestions(data)
+        setCount(Math.min(5, data.length))
       } catch (e) {
         setLoadError(e instanceof Error ? e.message : 'Network error')
       }
@@ -94,10 +96,46 @@ export default function SetPage() {
     setResult(null)
   }
 
+  const newSet = () => {
+    if (!allQuestions.length) return
+    const n = Math.max(1, Math.min(count, allQuestions.length))
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5)
+    setQuestions(shuffled.slice(0, n))
+    setAnswers({})
+    setResult(null)
+  }
+
   return (
     <main style={{ minHeight: '100vh', padding: '2rem' }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16 }}>Practice set</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <label htmlFor="count" style={{ fontSize: 14, color: '#374151' }}>
+            Number of questions:
+          </label>
+          <input
+            id="count"
+            type="number"
+            min={1}
+            max={Math.max(1, allQuestions.length)}
+            value={count}
+            onChange={(e) => setCount(Number(e.target.value))}
+            style={{ width: 90, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 8 }}
+          />
+          <button
+            onClick={newSet}
+            disabled={!allQuestions.length}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 10,
+              border: '1px solid #e5e7eb',
+              background: '#fff',
+              cursor: !allQuestions.length ? 'not-allowed' : 'pointer',
+            }}
+          >
+            New set
+          </button>
+        </div>
 
         {loadError && (
           <div
