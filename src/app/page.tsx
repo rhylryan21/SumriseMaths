@@ -20,6 +20,9 @@ export default function Home() {
           <Link href="/practice" className="rounded-2xl border px-5 py-3">
             Practice
           </Link>
+          <Link href="/set" className="rounded-2xl border px-5 py-3">
+            Go to the Practice Set
+          </Link>
         </div>
         <p className="text-sm text-gray-400">© {new Date().getFullYear()} Sumrise Maths</p>
       </div>
