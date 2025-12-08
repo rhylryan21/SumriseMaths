@@ -28,6 +28,7 @@ export default function SetPage() {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [count, setCount] = useState<number>(5)
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +53,11 @@ export default function SetPage() {
     }
     return map
   }, [result])
+
+  const topics = useMemo(
+    () => Array.from(new Set(allQuestions.map((q) => q.topic))).sort(),
+    [allQuestions],
+  )
 
   const submit = async () => {
     setLoading(true)
@@ -98,8 +104,11 @@ export default function SetPage() {
 
   const newSet = () => {
     if (!allQuestions.length) return
-    const n = Math.max(1, Math.min(count, allQuestions.length))
-    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5)
+    const pool = selectedTopics.length
+      ? allQuestions.filter((q) => selectedTopics.includes(q.topic))
+      : allQuestions
+    const n = Math.max(1, Math.min(count, pool.length || 1))
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
     setQuestions(shuffled.slice(0, n))
     setAnswers({})
     setResult(null)
@@ -109,6 +118,53 @@ export default function SetPage() {
     <main style={{ minHeight: '100vh', padding: '2rem' }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16 }}>Practice set</h1>
+        {topics.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+              marginBottom: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: '#374151' }}>Topics:</span>
+            {topics.map((t) => {
+              const checked = selectedTopics.includes(t)
+              return (
+                <label
+                  key={t}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() =>
+                      setSelectedTopics((prev) =>
+                        checked ? prev.filter((x) => x !== t) : [...prev, t],
+                      )
+                    }
+                  />
+                  {t}
+                </label>
+              )
+            })}
+            {/* quick clear */}
+            {selectedTopics.length > 0 && (
+              <button
+                onClick={() => setSelectedTopics([])}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 8,
+                  border: '1px solid #e5e7eb',
+                  background: '#fff',
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <label htmlFor="count" style={{ fontSize: 14, color: '#374151' }}>
             Number of questions:
