@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #ffffff;
@@ -22,5 +22,155 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+/* === Theme variables & light/dark surfaces === */
+:root {
+  --bg: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --primary: #111827;
+  --primary-text: #ffffff;
+  --success: #166534;
+  --success-bg: #f0fdf4;
+  --success-border: #22c55e;
+  --error: #991b1b;
+  --error-bg: #fef2f2;
+  --error-border: #ef4444;
+  --input-border: #d1d5db;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f19;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --card: #111827;
+    --border: #1f2937;
+    --primary: #e5e7eb;
+    --primary-text: #111827;
+    --success: #22c55e;
+    --success-bg: #052e16;
+    --success-border: #14532d;
+    --error: #f87171;
+    --error-bg: #3b0a0a;
+    --error-border: #7f1d1d;
+    --input-border: #374151;
+  }
+}
+
+.vcenter {
+  min-height: calc(100vh - 4rem);
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page {
+  min-height: 100vh;
+  padding: 2rem;
+}
+.wrapper {
+  width: min(960px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+.h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 8px;
+}
+.input-sm {
+  width: 90px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  border: none;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  margin-bottom: 16px;
+}
+
+.feedback-success {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+}
+.feedback-error {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error);
+}
+
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 12px;
+}
+.title {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+/* Home hero heading — matches Tailwind: text-4xl md:text-6xl font-extrabold tracking-tight */
+.hero-title {
+  font-weight: 800; /* font-extrabold */
+  letter-spacing: -0.025em; /* tracking-tight */
+  font-size: 2.25rem; /* text-4xl (36px) */
+  line-height: 2.5rem; /* 40px */
+}
+@media (min-width: 768px) {
+  /* md: breakpoint */
+  .hero-title {
+    font-size: 3.75rem; /* text-6xl (60px) */
+    line-height: 1; /* tighter line-height like Tailwind */
+  }
 }

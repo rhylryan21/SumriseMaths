@@ -4,28 +4,28 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-8">
-      <div className="max-w-2xl space-y-6 text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight md:text-6xl">Sumrise Maths</h1>
-        <p className="text-lg text-gray-600 md:text-xl">
-          Personalised, step-aware maths practice for KS3 & GCSE.
-        </p>
-        <div className="flex justify-center gap-3">
-          <Link href="/demo" className="rounded-2xl bg-black px-5 py-3 text-white">
+    <section className="vcenter">
+      <div>
+        <h1 className="hero-title">Sumrise Maths</h1>
+        <p className="muted">Personalised, step-aware maths practice for KS3 & GCSE.</p>
+
+        <div className="controls" style={{ justifyContent: 'center' }}>
+          <Link href="/demo" className="btn btn-primary">
             Try a demo
           </Link>
-          <Link href="#" className="rounded-2xl border px-5 py-3">
+          <Link href="#" className="btn">
             For teachers
           </Link>
-          <Link href="/practice" className="rounded-2xl border px-5 py-3">
+          <Link href="/practice" className="btn">
             Practice
           </Link>
-          <Link href="/set" className="rounded-2xl border px-5 py-3">
+          <Link href="/set" className="btn">
             Go to the Practice Set
           </Link>
         </div>
-        <p className="text-sm text-gray-400">© {new Date().getFullYear()} Sumrise Maths</p>
+
+        <p className="small muted">© {new Date().getFullYear()} Sumrise Maths</p>
       </div>
-    </main>
+    </section>
   )
 }

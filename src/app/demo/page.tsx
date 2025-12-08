@@ -1,6 +1,8 @@
 'use client'
 import { useState, useMemo } from 'react'
-
+import { Button, PrimaryButton } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Card } from '@/components/ui/Card'
 type EvaluateResponse = { ok: true; value: number } | { ok: false; feedback?: string }
 
 const API_URL = process.env.NEXT_PUBLIC_GRADING_URL ?? 'http://127.0.0.1:8001'
@@ -45,43 +47,33 @@ export default function DemoPage() {
   }
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-2xl space-y-4">
-        <h1 className="text-3xl font-bold">Sumrise Maths · Demo</h1>
-        <p className="text-sm text-gray-600">
+    <main className="container">
+      <div className="wrapper space-y-4">
+        <h1 className="h1">Sumrise Maths · Demo</h1>
+        <p className="small muted">
           Tip: <code>^</code> means power here (e.g., <code>3^2</code>).
         </p>
 
-        <div className="flex gap-2">
-          <input
-            className="flex-1 rounded border p-2"
+        <div className="controls">
+          <Input
+            className="flex-1"
             value={expr}
             onChange={(e) => setExpr(e.target.value)}
             placeholder="Enter expression (e.g., 3^2 + 4^2)"
           />
-          <button
-            onClick={callApi}
-            className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-            disabled={loading || !!clientSideHint}
-          >
+          <PrimaryButton onClick={callApi} disabled={loading || !!clientSideHint}>
             {loading ? 'Working…' : 'Evaluate'}
-          </button>
+          </PrimaryButton>
         </div>
 
-        {clientSideHint && (
-          <div className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-700">
-            {clientSideHint}
-          </div>
-        )}
+        {clientSideHint && <Card className="small muted">{clientSideHint}</Card>}
 
-        {result && <div className="rounded border p-3">Result: {result}</div>}
+        {result && <Card>Result: {result}</Card>}
 
-        {error && (
-          <div className="rounded border border-red-500 p-3 text-red-700">Error: {error}</div>
-        )}
+        {error && <div className="feedback-error">Error: {error}</div>}
 
         {lastGood && !result && !error && (
-          <div className="text-sm text-gray-500">Last correct answer: {lastGood}</div>
+          <div className="small muted">Last correct answer: {lastGood}</div>
         )}
       </div>
     </main>

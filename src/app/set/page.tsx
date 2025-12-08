@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-
+import { Button, PrimaryButton } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Card } from '@/components/ui/Card'
 type Question = { id: string; topic: string; prompt: string; type: string }
 
 type MarkResponse = {
@@ -115,9 +117,9 @@ export default function SetPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '2rem' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 16 }}>Practice set</h1>
+    <main className="container">
+      <div className="wrapper">
+        <h1 className="h1">Practice set</h1>
         {topics.length > 0 && (
           <div
             style={{
@@ -151,104 +153,60 @@ export default function SetPage() {
             })}
             {/* quick clear */}
             {selectedTopics.length > 0 && (
-              <button
+              <Button
                 onClick={() => setSelectedTopics([])}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: 8,
-                  border: '1px solid #e5e7eb',
-                  background: '#fff',
-                }}
+                // style={{
+                //   padding: '4px 8px',
+                //   borderRadius: 8,
+                //   border: '1px solid #e5e7eb',
+                //   background: '#fff',
+                // }}
               >
                 Clear
-              </button>
+              </Button>
             )}
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <label htmlFor="count" style={{ fontSize: 14, color: '#374151' }}>
+        <div className="controls">
+          <label htmlFor="count" className="muted small">
             Number of questions:
           </label>
-          <input
+          <Input
             id="count"
             type="number"
             min={1}
             max={Math.max(1, allQuestions.length)}
             value={count}
             onChange={(e) => setCount(Number(e.target.value))}
-            style={{ width: 90, padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: 8 }}
+            className="input input-sm"
           />
-          <button
-            onClick={newSet}
-            disabled={!allQuestions.length}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 10,
-              border: '1px solid #e5e7eb',
-              background: '#fff',
-              cursor: !allQuestions.length ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <Button onClick={newSet} disabled={!allQuestions.length}>
             New set
-          </button>
+          </Button>
         </div>
 
-        {loadError && (
-          <div
-            style={{
-              padding: 12,
-              border: '1px solid #ef4444',
-              color: '#991b1b',
-              borderRadius: 8,
-              marginBottom: 16,
-            }}
-          >
-            Failed to load questions: {loadError}
-          </div>
-        )}
+        {loadError && <div className="feedback-error">Failed to load questions: {loadError}</div>}
 
         {!questions.length && !loadError && <div>Loading…</div>}
 
         {questions.map((q) => {
           const fb = byId.get(q.id)?.response
           return (
-            <div
-              key={q.id}
-              style={{
-                padding: 16,
-                border: '1px solid #e5e7eb',
-                borderRadius: 12,
-                marginBottom: 16,
-              }}
-            >
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
+            <Card key={q.id}>
+              <div className="small muted" style={{ marginBottom: 4 }}>
                 [{q.topic}] {q.id}
               </div>
-              <div style={{ fontSize: 18, marginBottom: 8 }}>{q.prompt}</div>
+              <div className="title">{q.prompt}</div>
 
-              <input
+              <Input
                 value={answers[q.id] ?? ''}
                 onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
                 placeholder="Your answer"
-                style={{
-                  width: '100%',
-                  padding: '8px 10px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: 8,
-                  marginBottom: 8,
-                }}
+                className="input"
               />
 
               {fb && (
-                <div
-                  style={{
-                    padding: 10,
-                    border: `1px solid ${fb.correct ? '#22c55e' : '#ef4444'}`,
-                    color: fb.correct ? '#166534' : '#991b1b',
-                    borderRadius: 8,
-                    background: fb.correct ? '#f0fdf4' : '#fef2f2',
-                  }}
-                >
+                <div className={fb.correct ? 'feedback-success' : 'feedback-error'}>
                   {fb.feedback}
                   {!fb.correct && (fb.expected_str || typeof fb.expected === 'number') && (
                     <span style={{ color: '#6b7280' }}>
@@ -271,26 +229,14 @@ export default function SetPage() {
                   ) : null}
                 </div>
               )}
-            </div>
+            </Card>
           )
         })}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={submit}
-            disabled={loading || !questions.length}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 12,
-              background: '#111827',
-              color: 'white',
-              border: 'none',
-              opacity: loading || !questions.length ? 0.6 : 1,
-              cursor: loading || !questions.length ? 'not-allowed' : 'pointer',
-            }}
-          >
+        <div className="controls">
+          <PrimaryButton onClick={submit} disabled={loading || !questions.length}>
             {loading ? 'Marking…' : 'Mark set'}
-          </button>
+          </PrimaryButton>
 
           {result && (
             <div style={{ fontSize: 14, color: '#374151' }}>
@@ -298,7 +244,7 @@ export default function SetPage() {
             </div>
           )}
           {result && result.total > result.correct && (
-            <button
+            <Button
               onClick={retryIncorrect}
               style={{
                 padding: '10px 16px',
@@ -308,11 +254,11 @@ export default function SetPage() {
               }}
             >
               Retry incorrect
-            </button>
+            </Button>
           )}
 
           {questions.length !== allQuestions.length && (
-            <button
+            <Button
               onClick={resetSet}
               style={{
                 padding: '10px 16px',
@@ -322,7 +268,7 @@ export default function SetPage() {
               }}
             >
               Reset set
-            </button>
+            </Button>
           )}
         </div>
       </div>

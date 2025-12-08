@@ -1,5 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { Button, PrimaryButton } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Card } from '@/components/ui/Card'
 
 type Question = { id: string; topic: string; prompt: string; type: string }
 type MarkResponse = {
@@ -21,15 +24,6 @@ export default function PracticePage() {
   const [mark, setMark] = useState<MarkResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const q = questions[idx]
-
-  useEffect(() => {
-    const load = async () => {
-      const res = await fetch(`${API_URL}/questions`)
-      const data = (await res.json()) as Question[]
-      setQuestions(data)
-    }
-    load().catch(console.error)
-  }, [])
 
   const submit = async () => {
     if (!q) return
@@ -71,36 +65,30 @@ export default function PracticePage() {
   }, [])
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-2xl space-y-4">
-        <h1 className="text-3xl font-bold">Practice</h1>
+    <main className="container">
+      <div className="wrapper space-y-4">
+        <h1 className="h1">Practice</h1>
 
         {!q && <div>Loading questions…</div>}
 
         {q && (
           <div className="space-y-3">
-            <div className="text-sm text-gray-500">Topic: {q.topic}</div>
-            <div className="text-lg">{q.prompt}</div>
-            <div className="flex gap-2">
-              <input
-                className="flex-1 rounded border p-2"
+            <div className="small muted">Topic: {q.topic}</div>
+            <div className="title">{q.prompt}</div>
+            <div className="controls">
+              <Input
+                className="flex-1"
                 placeholder="Your answer"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
               />
-              <button
-                className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-                disabled={loading || !answer.trim()}
-                onClick={submit}
-              >
+              <PrimaryButton disabled={loading || !answer.trim()} onClick={submit}>
                 {loading ? 'Checking…' : 'Check'}
-              </button>
+              </PrimaryButton>
             </div>
 
             {mark && (
-              <div
-                className={`rounded border p-3 ${mark.correct ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700'}`}
-              >
+              <div className={mark.correct ? 'feedback-success' : 'feedback-error'}>
                 {mark.feedback}{' '}
                 {mark.ok && typeof mark.expected === 'number' && !mark.correct && (
                   <span className="text-gray-500"> (Expected ≈ {mark.expected})</span>
@@ -108,30 +96,24 @@ export default function PracticePage() {
               </div>
             )}
             {mark?.steps?.length ? (
-              <div className="rounded border p-3">
+              <Card>
                 <div className="mb-1 font-medium">Worked steps</div>
                 <ol className="ml-5 list-decimal space-y-1">
                   {mark.steps.map((s, i) => (
                     <li key={i}>{s}</li>
                   ))}
                 </ol>
-              </div>
+              </Card>
             ) : null}
 
             {loadError && (
-              <div className="rounded border border-red-500 p-3 text-red-700">
-                Failed to load questions: {loadError}
-              </div>
+              <div className="feedback-error">Failed to load questions: {loadError}</div>
             )}
 
-            <div className="flex gap-2">
-              <button
-                className="rounded border px-4 py-2"
-                onClick={next}
-                disabled={!questions.length}
-              >
+            <div className="controls">
+              <Button onClick={next} disabled={!questions.length}>
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}
