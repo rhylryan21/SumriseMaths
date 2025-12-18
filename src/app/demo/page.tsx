@@ -1,81 +1,109 @@
 'use client'
-import { useState, useMemo } from 'react'
-import { Button, PrimaryButton } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { useState, type FormEvent } from 'react'
 import { Card } from '@/components/ui/Card'
-type EvaluateResponse = { ok: true; value: number } | { ok: false; feedback?: string }
-
-const API_URL = process.env.NEXT_PUBLIC_GRADING_URL ?? 'http://127.0.0.1:8001'
-const ALLOWED = /^[0-9\s+\-*/^().]{1,100}$/
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { evaluate } from '@/lib/api'
+import type { EvaluateResponse } from '@/lib/types'
+import { ANSWER_ALLOWED_RE as ALLOWED, ANSWER_LEN_LIMIT as LEN_LIMIT } from '@/lib/constants'
+import { validateAnswer } from '@/lib/validation'
 
 export default function DemoPage() {
   const [expr, setExpr] = useState('3^2 + 4^2')
-  const [result, setResult] = useState<string>('') // current attempt
-  const [lastGood, setLastGood] = useState<string>('') // persists last success
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>('')
+  const [data, setData] = useState<EvaluateResponse | null>(null)
+  const [error, setError] = useState('')
 
-  const clientSideHint = useMemo(() => {
-    if (!expr.trim()) return 'Enter something like 3^2 + 4^2'
-    if (!ALLOWED.test(expr)) return 'Only digits, + - * / ^ ( ) . and spaces (max 100 chars).'
-    return ''
-  }, [expr])
-
-  const callApi = async () => {
-    setLoading(true)
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setError('')
-    setResult('')
+    const trimmed = expr.trim()
+
+    const v = validateAnswer(expr)
+    if (!v.ok) {
+      setError(v.error)
+      setData(null)
+      return
+    }
+
+    setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/evaluate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expr }),
-      })
-      const json: EvaluateResponse = await res.json()
-      if (json.ok) {
-        const val = String(json.value)
-        setResult(val)
-        setLastGood(val)
-      } else {
-        setError(json.feedback ?? 'Unknown error')
-      }
+      const res = await evaluate(v.value)
+      setData(res)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Network error')
+      const message = e instanceof Error ? e.message : 'Failed to evaluate.'
+      setError(message)
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+
+    if (!trimmed) {
+      setError('Answer required')
+      setData(null)
+      return
+    }
+    if (trimmed.length > LEN_LIMIT) {
+      setError(`Answer too long (> ${LEN_LIMIT})`)
+      setData(null)
+      return
+    }
+    if (!ALLOWED.test(trimmed)) {
+      setError('Only digits, + - * / ^ ( ) . and spaces are allowed (max 100 chars).')
+      setData(null)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await evaluate(trimmed)
+      setData(res)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to evaluate.'
+      setError(message)
+      setData(null)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="container">
-      <div className="wrapper space-y-4">
-        <h1 className="h1">Sumrise Maths · Demo</h1>
-        <p className="small muted">
-          Tip: <code>^</code> means power here (e.g., <code>3^2</code>).
-        </p>
-
-        <div className="controls">
+    <main className="mx-auto max-w-2xl space-y-4 p-6">
+      <h1 className="text-2xl font-bold">Evaluate (demo)</h1>
+      <Card className="p-4">
+        <form onSubmit={onSubmit} className="space-y-3">
+          <label htmlFor="expr" className="sr-only">
+            Expression
+          </label>
           <Input
-            className="flex-1"
+            id="expr"
             value={expr}
             onChange={(e) => setExpr(e.target.value)}
-            placeholder="Enter expression (e.g., 3^2 + 4^2)"
+            placeholder="e.g. 3^2 + 4^2"
           />
-          <PrimaryButton onClick={callApi} disabled={loading || !!clientSideHint}>
-            {loading ? 'Working…' : 'Evaluate'}
-          </PrimaryButton>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Running…' : 'Run'}
+          </Button>
+        </form>
+      </Card>
+
+      {error && (
+        <div className="text-red-500" role="status" aria-live="polite">
+          {error}
         </div>
+      )}
 
-        {clientSideHint && <Card className="small muted">{clientSideHint}</Card>}
-
-        {result && <Card>Result: {result}</Card>}
-
-        {error && <div className="feedback-error">Error: {error}</div>}
-
-        {lastGood && !result && !error && (
-          <div className="small muted">Last correct answer: {lastGood}</div>
-        )}
-      </div>
+      {data && (
+        <Card className="p-4">
+          {data.ok ? (
+            <div>Value: {data.value}</div>
+          ) : (
+            <div className="text-red-500">
+              {data.feedback || data.error || 'Invalid expression'}
+            </div>
+          )}
+        </Card>
+      )}
     </main>
   )
 }
