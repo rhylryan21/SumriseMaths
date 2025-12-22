@@ -18,6 +18,7 @@ type RawNestedItem = {
     score: number
     feedback: string
     expected?: string | null
+    expected_str?: string | null
     duration_ms?: number | null
   }
 }
@@ -28,6 +29,7 @@ type RawFlatItem = {
   score: number
   feedback: string
   expected?: string | null
+  expected_str?: string | null
   duration_ms?: number | null
 }
 type RawMarkItem = RawNestedItem | RawFlatItem
@@ -99,27 +101,34 @@ async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> 
 
 // ---------- adapters ----------
 function adaptItem(raw: RawMarkItem): MarkBatchItemResult {
+  // If the server already sent { id, response: {...} }, just coerce/normalize fields.
   if ('response' in raw) {
-    // nested shape -> flatten
+    const r = raw.response
     return {
       id: raw.id,
-      ok: raw.response.ok,
-      correct: raw.response.correct,
-      score: raw.response.score,
-      feedback: raw.response.feedback,
-      expected: raw.response.expected ?? null,
-      duration_ms: raw.response.duration_ms ?? null,
+      response: {
+        ok: r.ok,
+        correct: r.correct,
+        score: r.score,
+        feedback: r.feedback,
+        // prefer `expected`, fall back to `expected_str`
+        expected: r.expected ?? r.expected_str ?? null,
+        // keep `expected_str` if present for UI that wants the raw string
+        expected_str: r.expected_str ?? r.expected ?? null,
+      },
     }
   }
-  // already flat
+  // Otherwise the server sent a flat shape; convert it to nested.
   return {
     id: raw.id,
-    ok: raw.ok,
-    correct: raw.correct,
-    score: raw.score,
-    feedback: raw.feedback,
-    expected: raw.expected ?? null,
-    duration_ms: raw.duration_ms ?? null,
+    response: {
+      ok: (raw as RawFlatItem).ok,
+      correct: (raw as RawFlatItem).correct,
+      score: (raw as RawFlatItem).score,
+      feedback: (raw as RawFlatItem).feedback,
+      expected: (raw as RawFlatItem).expected ?? (raw as RawFlatItem).expected_str ?? null,
+      expected_str: (raw as RawFlatItem).expected_str ?? (raw as RawFlatItem).expected ?? null,
+    },
   }
 }
 
@@ -137,7 +146,7 @@ function adaptBatchResponse(raw: RawBatchResponse): MarkBatchResponse {
   const correct =
     typeof raw?.correct === 'number'
       ? raw!.correct
-      : results.reduce((acc, it) => acc + (it.correct ? 1 : 0), 0)
+      : results.reduce((acc, it) => acc + (it.response?.correct ? 1 : 0), 0)
 
   return {
     ok: Boolean(raw?.ok),
@@ -145,6 +154,7 @@ function adaptBatchResponse(raw: RawBatchResponse): MarkBatchResponse {
     correct,
     results,
     attempt_id: normalizeAttemptId(raw?.attempt_id),
+    // keep nullable duration at the batch level if present; else null
     duration_ms: typeof raw?.duration_ms === 'number' ? raw!.duration_ms! : null,
   }
 }
@@ -176,24 +186,32 @@ function assertNormalizedBatch(value: unknown): void {
     if (!isObject(itRaw)) {
       throw new Error('results[] invalid')
     }
+    const it = itRaw as Record<string, unknown>
 
-    const id = (itRaw as Record<string, unknown>).id
-    const correct = (itRaw as Record<string, unknown>).correct
-    const score = (itRaw as Record<string, unknown>).score
-    const feedback = (itRaw as Record<string, unknown>).feedback
-
-    if (!isString(id)) {
+    // id must be a string
+    if (!isString(it.id)) {
       throw new Error('results[].id missing/invalid')
     }
-    if (!isBoolean(correct)) {
-      throw new Error(`results[${String(id)}].correct invalid`)
+
+    // response must be an object with typed fields
+    if (!isObject(it.response)) {
+      throw new Error(`results[${String(it.id)}].response missing/invalid`)
     }
-    if (!isNumber(score)) {
-      throw new Error(`results[${String(id)}].score invalid`)
+    const resp = it.response as Record<string, unknown>
+
+    if (!isBoolean(resp.ok)) {
+      throw new Error(`results[${String(it.id)}].response.ok invalid`)
     }
-    if (!isString(feedback)) {
-      throw new Error(`results[${String(id)}].feedback invalid`)
+    if (!isBoolean(resp.correct)) {
+      throw new Error(`results[${String(it.id)}].response.correct invalid`)
     }
+    if (!isNumber(resp.score)) {
+      throw new Error(`results[${String(it.id)}].response.score invalid`)
+    }
+    if (!isString(resp.feedback)) {
+      throw new Error(`results[${String(it.id)}].response.feedback invalid`)
+    }
+    // expected/expected_str can be string or null; skip strict check here
   }
 }
 

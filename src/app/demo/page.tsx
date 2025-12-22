@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { evaluate } from '@/lib/api'
 import type { EvaluateResponse } from '@/lib/types'
-import { ANSWER_ALLOWED_RE as ALLOWED, ANSWER_LEN_LIMIT as LEN_LIMIT } from '@/lib/constants'
 import { validateAnswer } from '@/lib/validation'
 
 export default function DemoPage() {
@@ -17,11 +16,10 @@ export default function DemoPage() {
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
-    const trimmed = expr.trim()
 
     const v = validateAnswer(expr)
     if (!v.ok) {
-      setError(v.error)
+      setError(v.error || 'Invalid expression')
       setData(null)
       return
     }
@@ -29,34 +27,6 @@ export default function DemoPage() {
     setLoading(true)
     try {
       const res = await evaluate(v.value)
-      setData(res)
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to evaluate.'
-      setError(message)
-      setData(null)
-    } finally {
-      setLoading(false)
-    }
-
-    if (!trimmed) {
-      setError('Answer required')
-      setData(null)
-      return
-    }
-    if (trimmed.length > LEN_LIMIT) {
-      setError(`Answer too long (> ${LEN_LIMIT})`)
-      setData(null)
-      return
-    }
-    if (!ALLOWED.test(trimmed)) {
-      setError('Only digits, + - * / ^ ( ) . and spaces are allowed (max 100 chars).')
-      setData(null)
-      return
-    }
-
-    setLoading(true)
-    try {
-      const res = await evaluate(trimmed)
       setData(res)
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to evaluate.'
@@ -98,9 +68,7 @@ export default function DemoPage() {
           {data.ok ? (
             <div>Value: {data.value}</div>
           ) : (
-            <div className="text-red-500">
-              {data.feedback || data.error || 'Invalid expression'}
-            </div>
+            <div className="text-red-500">{data.feedback ?? 'Invalid expression'}</div>
           )}
         </Card>
       )}

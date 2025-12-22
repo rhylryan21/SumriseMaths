@@ -1,4 +1,10 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+# .husky/pre-commit  (full file)
 
+# Fail on first error
+set -e
+
+# Block commit on TS errors
+pnpm typecheck
+
+# Lint/format only staged files
 pnpm lint-staged

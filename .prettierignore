@@ -4,3 +4,8 @@ out
 build
 .vercel
 coverage
+# Generated files
+next-env.d.ts
+openapi.json
+src/lib/api-types.ts
+src/lib/generated/

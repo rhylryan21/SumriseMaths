@@ -18,16 +18,21 @@ export default function ResultsSummary({ data }: Props) {
       </p>
 
       <ul className="space-y-2">
-        {results.map((r) => (
-          <li key={r.id} className="rounded border p-3">
-            <div className="font-mono text-sm">Q: {r.id}</div>
-            <div className="text-sm">
-              {r.correct ? `✅ Correct — score ${r.score}` : `❌ Incorrect — score ${r.score}`}
-            </div>
-            {r.expected ? <div className="text-sm">Expected: {r.expected}</div> : null}
-            {r.feedback ? <div className="text-sm">{r.feedback}</div> : null}
-          </li>
-        ))}
+        {results.map((r) => {
+          const resp = r.response
+          return (
+            <li key={r.id} className="rounded border p-3">
+              <div className="font-mono text-sm">Q: {r.id}</div>
+              <div className="text-sm">
+                {resp.correct
+                  ? `✅ Correct — score ${resp.score}`
+                  : `❌ Incorrect — score ${resp.score}`}
+              </div>
+              {resp.expected ? <div className="text-sm">Expected: {resp.expected}</div> : null}
+              {resp.feedback ? <div className="text-sm">{resp.feedback}</div> : null}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
