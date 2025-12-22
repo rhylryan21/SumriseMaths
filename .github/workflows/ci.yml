@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main, develop]
 
-# Run all shell steps from the web/ folder
 defaults:
   run:
     working-directory: web
@@ -14,8 +13,6 @@ defaults:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout
@@ -28,13 +25,17 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: web/pnpm-lock.yaml
 
-      # Ensure pnpm exists (via Corepack)
-      - name: Install pnpm
+      # <-- This guarantees pnpm is installed and on PATH
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false # we install in the next step
+
+      - name: Show pnpm version
         run: |
-          corepack enable
-          corepack prepare pnpm@9.12.3 --activate
           pnpm -v
-          which pnpm
+          command -v pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
