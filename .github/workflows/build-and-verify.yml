@@ -20,18 +20,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node (20) + cache
+      - name: Setup Node (20)
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
-      # Ensure pnpm exists on PATH (Corepack way)
-      - name: Enable Corepack and activate pnpm
+      # Install pnpm on PATH (reliable on GitHub runners)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Show pnpm version
         run: |
-          corepack enable
-          corepack prepare pnpm@9 --activate
           pnpm -v
           which pnpm
 
