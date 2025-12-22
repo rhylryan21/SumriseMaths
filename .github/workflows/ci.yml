@@ -1,3 +1,4 @@
+# .github/workflows/build-and-verify.yml
 name: build-and-verify
 
 on:
@@ -9,6 +10,7 @@ on:
 defaults:
   run:
     working-directory: web
+    shell: bash
 
 jobs:
   verify:
@@ -18,24 +20,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node (LTS) + cache
+      - name: Setup Node (20) + cache
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'pnpm'
+          node-version: 20
+          cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
-      # <-- This guarantees pnpm is installed and on PATH
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false # we install in the next step
-
-      - name: Show pnpm version
+      # Ensure pnpm exists on PATH (Corepack way)
+      - name: Enable Corepack and activate pnpm
         run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
           pnpm -v
-          command -v pnpm
+          which pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
