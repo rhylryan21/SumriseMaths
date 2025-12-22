@@ -1,4 +1,4 @@
-# .github/workflows/build-and-verify.yml
+# .github/workflows/build-and-verify.yml (in the web repo root)
 name: build-and-verify
 
 on:
@@ -9,30 +9,29 @@ on:
 
 defaults:
   run:
-    working-directory: web
+    working-directory: .
     shell: bash
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Install pnpm and put it on PATH
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
 
       - name: Setup Node (20)
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
-
-      # Install pnpm on PATH (reliable on GitHub runners)
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Show pnpm version
         run: |
