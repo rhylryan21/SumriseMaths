@@ -1,4 +1,4 @@
-name: web-ci
+name: build-and-verify
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  build-and-verify:
+  verify:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,11 +38,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install deps
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify (typecheck, lint, format check, build)
-        env:
-          # Ensure Next has a URL for your grader in CI (adjust if different)
-          NEXT_PUBLIC_GRADING_URL: http://127.0.0.1:8001
+      # optional: ensure env file exists if your build needs it
+      # - name: Touch .env.local (optional)
+      #   run: test -f .env.local || touch .env.local
+
+      - name: Build & verify
         run: pnpm verify
