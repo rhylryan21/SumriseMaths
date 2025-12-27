@@ -95,6 +95,24 @@ function adaptBatchResponse(raw: RawBatchResponse): MarkBatchResponse {
 
 /* ===================== Public API ===================== */
 
+// Query options for fetching questions
+export type QuestionQuery = {
+  topic?: string
+  limit?: number
+  random?: boolean
+}
+
+// Helper to build a query string safely
+function toQuery(params?: QuestionQuery): string {
+  if (!params) return ''
+  const q = new URLSearchParams()
+  if (params.topic) q.set('topic', params.topic)
+  if (typeof params.limit === 'number') q.set('limit', String(params.limit))
+  if (params.random === true) q.set('random', 'true')
+  const s = q.toString()
+  return s ? `?${s}` : ''
+}
+
 export async function evaluate(expr: string): Promise<EvaluateResponse> {
   return fetchJson<EvaluateResponse>(`${API_URL}/evaluate`, {
     method: 'POST',
@@ -102,8 +120,9 @@ export async function evaluate(expr: string): Promise<EvaluateResponse> {
   })
 }
 
-export async function getQuestions(): Promise<Question[]> {
-  return fetchJson<Question[]>(`${API_URL}/questions`, { method: 'GET' })
+export async function getQuestions(params?: QuestionQuery): Promise<Question[]> {
+  const qs = toQuery(params)
+  return fetchJson<Question[]>(`${API_URL}/questions${qs}`, { method: 'GET' })
 }
 
 export async function getQuestion(id: string): Promise<Question> {
@@ -122,8 +141,8 @@ export async function markBatch(
   return adaptBatchResponse(raw)
 }
 
-export async function listQuestions(): Promise<Question[]> {
-  return getQuestions()
+export async function listQuestions(params?: QuestionQuery): Promise<Question[]> {
+  return getQuestions(params)
 }
 
 /* ===================== Attempts ===================== */

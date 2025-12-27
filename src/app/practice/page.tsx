@@ -15,7 +15,11 @@ const adaptValidator = (raw: string) => {
 }
 
 export default function PracticePage() {
-  const { questions, loading, error } = useQuestions()
+  const { questions, loading, error } = useQuestions({
+    topic: 'fractions',
+    limit: 10,
+    random: true,
+  })
   const [attempted, setAttempted] = useState(false)
 
   // Hook parity: pass a validator that returns string|null
