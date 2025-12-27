@@ -1,7 +1,26 @@
 import { ComponentProps } from 'react'
-export function Button({ className = '', ...props }: ComponentProps<'button'>) {
-  return <button className={`btn ${className}`} {...props} />
+
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link'
+
+type ButtonProps = ComponentProps<'button'> & {
+  /** Visual style variant; defaults to 'primary' */
+  variant?: ButtonVariant
 }
-export function PrimaryButton({ className = '', ...props }: ComponentProps<'button'>) {
-  return <button className={`btn btn-primary ${className}`} {...props} />
+
+const VARIANT_CLASS: Record<ButtonVariant, string> = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  ghost: 'btn-ghost',
+  danger: 'btn-danger',
+  link: 'btn-link',
+}
+
+export function Button({ className = '', variant = 'primary', ...rest }: ButtonProps) {
+  const variantClass = VARIANT_CLASS[variant] ?? ''
+  return <button className={`btn ${variantClass} ${className}`} {...rest} />
+}
+
+/** Backwards-compatible alias */
+export function PrimaryButton({ className = '', ...props }: Omit<ButtonProps, 'variant'>) {
+  return <Button variant="primary" className={className} {...props} />
 }
