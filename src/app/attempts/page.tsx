@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { listRecentAttempts, type AttemptSummary } from '@/lib/api'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -48,19 +49,19 @@ export default function AttemptsPage() {
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Recent Attempts</h1>
         <div className="flex gap-2">
-          <a href="/practice">
+          <Link href="/practice">
             <Button>Practice</Button>
-          </a>
-          <a href="/set">
+          </Link>
+          <Link href="/set">
             <Button variant="secondary">Set</Button>
-          </a>
+          </Link>
         </div>
       </header>
 
       <Card className="p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-gray-900 dark:text-gray-100">
-            <thead className="bg-gray-50 text-left text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50 text-left dark:bg-gray-900">
               <tr>
                 <th className="px-4 py-2">ID</th>
                 <th className="px-4 py-2">Created</th>
@@ -77,8 +78,15 @@ export default function AttemptsPage() {
                 </tr>
               ) : (
                 rows.map((r) => (
-                  <tr key={r.id} className="border-t border-gray-200 dark:border-gray-700">
-                    <td className="px-4 py-3 font-mono">{r.id}</td>
+                  <tr key={r.id} className="border-t">
+                    <td className="px-4 py-3 font-mono">
+                      <Link
+                        href={`/attempts/${r.id}`}
+                        className="underline underline-offset-2 hover:opacity-80"
+                      >
+                        {r.id}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">{r.created_at ?? '—'}</td>
                     <td className="px-4 py-3">
                       {r.correct}/{r.total}
