@@ -9,8 +9,27 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { markBatch, getQuestions } from '@/lib/api'
 import { validateAnswer } from '@/lib/validation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+
+function toTitle(s: string) {
+  return s.replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function clampCount(n: number | null | undefined) {
+  const v = Number.isFinite(n) ? Number(n) : 10
+  return Math.max(1, Math.min(50, v || 10))
+}
 
 export default function SetPage() {
+  // URL plumbing
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // derive initial state from URL
+  const urlTopic = searchParams.get('topic') || 'all'
+  const urlCount = clampCount(Number(searchParams.get('count')))
+
   // data + UX state
   const [questions, setQuestions] = React.useState<Question[]>([])
   const [answers, setAnswers] = React.useState<Record<string, string>>({})
@@ -18,12 +37,36 @@ export default function SetPage() {
   const [error, setError] = React.useState('')
   const [result, setResult] = React.useState<MarkBatchResponse | null>(null)
 
-  // controls
-  const [topics, setTopics] = React.useState<string[]>([]) // discovered topics
-  const [selectedTopic, setSelectedTopic] = React.useState<string>('all')
-  const [count, setCount] = React.useState<number>(10)
+  // controls (start from URL)
+  const [topics, setTopics] = React.useState<string[]>([])
+  const [selectedTopic, setSelectedTopic] = React.useState<string>(urlTopic)
+  const [count, setCount] = React.useState<number>(urlCount)
 
-  // initial fetch: load once without filters so we can build the topic dropdown
+  // keep URL in sync when controls change (no infinite loops)
+  React.useEffect(() => {
+    const currentTopic = searchParams.get('topic') || 'all'
+    const currentCount = clampCount(Number(searchParams.get('count')))
+    if (currentTopic === selectedTopic && currentCount === count) return
+
+    const sp = new URLSearchParams(searchParams)
+    if (selectedTopic === 'all') sp.delete('topic')
+    else sp.set('topic', selectedTopic)
+    sp.set('count', String(count))
+
+    router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTopic, count])
+
+  // respond to browser back/forward by syncing state from URL
+  React.useEffect(() => {
+    const t = searchParams.get('topic') || 'all'
+    const c = clampCount(Number(searchParams.get('count')))
+    if (t !== selectedTopic) setSelectedTopic(t)
+    if (c !== count) setCount(c)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // initial fetch for topics (one-time, unfiltered)
   React.useEffect(() => {
     let alive = true
     ;(async () => {
@@ -46,15 +89,7 @@ export default function SetPage() {
     }
   }, [])
 
-  // helper: pretty label from slug
-  const labelFor = React.useCallback((t: string) => {
-    return t
-      .replace(/[_-]+/g, ' ')
-      .trim()
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-  }, [])
-
-  // fetch a filtered set whenever controls change
+  // fetch filtered set whenever topic/count change
   React.useEffect(() => {
     let alive = true
     ;(async () => {
@@ -64,12 +99,11 @@ export default function SetPage() {
         setResult(null)
         const params = {
           topic: selectedTopic === 'all' ? undefined : selectedTopic,
-          limit: Math.max(1, Math.min(50, count || 1)),
+          limit: count,
         }
         const qs = await getQuestions(params)
         if (!alive) return
         setQuestions(qs)
-        // reset answers for just-returned ids
         setAnswers(Object.fromEntries(qs.map((q) => [q.id, ''])))
       } catch (e) {
         if (!alive) return
@@ -111,10 +145,7 @@ export default function SetPage() {
     setError('')
     setResult(null)
     try {
-      const items = questions.map((q) => ({
-        id: q.id,
-        answer: answers[q.id] ?? '',
-      }))
+      const items = questions.map((q) => ({ id: q.id, answer: answers[q.id] ?? '' }))
       const data = await markBatch(items)
       setResult(data)
     } catch (e) {
@@ -145,7 +176,7 @@ export default function SetPage() {
               <option value="all">All topics</option>
               {topics.map((t) => (
                 <option key={t} value={t}>
-                  {labelFor(t)}
+                  {toTitle(t)}
                 </option>
               ))}
             </select>
@@ -161,7 +192,7 @@ export default function SetPage() {
               min={1}
               max={50}
               value={count}
-              onChange={(e) => setCount(Number(e.target.value || 1))}
+              onChange={(e) => setCount(clampCount(Number(e.target.value)))}
               className="mt-1 w-32"
             />
           </div>
