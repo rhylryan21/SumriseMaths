@@ -6,6 +6,7 @@ import ResultsSummary from '@/components/grading/ResultsSummary'
 import { Card } from '@/components/ui/Card'
 import { getQuestions, markBatch } from '@/lib/api'
 import { validateAnswer } from '@/lib/validation'
+import { topicLabel } from '@/lib/topics'
 import type { MarkBatchResponse, Question } from '@/lib/types'
 
 type Filters = {
@@ -31,7 +32,8 @@ export default function SetClient() {
         const all = await getQuestions() // no filters -> we just extract unique topics
         if (!alive) return
         const uniq = Array.from(new Set(all.map((q) => q.topic).filter(Boolean))) as string[]
-        uniq.sort((a, b) => a.localeCompare(b))
+        // Sort by human-friendly label
+        uniq.sort((a, b) => topicLabel(a).localeCompare(topicLabel(b)))
         setTopics(uniq)
       } catch (e) {
         if (!alive) return
@@ -128,7 +130,7 @@ export default function SetClient() {
               <option value="">All topics</option>
               {topics.map((t) => (
                 <option key={t} value={t}>
-                  {t}
+                  {topicLabel(t)}
                 </option>
               ))}
             </select>
