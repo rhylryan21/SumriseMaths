@@ -1,105 +1,90 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import * as React from 'react'
 import Link from 'next/link'
-import { listRecentAttempts, type AttemptSummary } from '@/lib/api'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { listRecentAttempts, type AttemptSummary } from '@/lib/api'
 
 export default function AttemptsPage() {
-  const [rows, setRows] = useState<AttemptSummary[] | null>(null)
-  const [error, setError] = useState<string>('')
+  const [items, setItems] = React.useState<AttemptSummary[]>([])
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string>('')
 
-  useEffect(() => {
-    let mounted = true
+  React.useEffect(() => {
+    let alive = true
     ;(async () => {
+      setLoading(true)
+      setError('')
       try {
         const data = await listRecentAttempts(20)
-        if (mounted) setRows(data)
+        if (!alive) return
+        setItems(data)
       } catch (e) {
-        const msg = e instanceof Error && e.message ? e.message : 'Failed to load recent attempts.'
-        if (mounted) setError(msg)
+        if (!alive) return
+        const msg = e instanceof Error ? e.message : 'Failed to load attempts.'
+        setError(msg)
+      } finally {
+        if (alive) setLoading(false)
       }
     })()
     return () => {
-      mounted = false
+      alive = false
     }
   }, [])
 
-  if (error) {
-    return (
-      <main className="mx-auto max-w-4xl p-6">
-        <Card className="border border-red-300 bg-red-50 p-4" role="alert">
-          <p className="text-red-700">{error}</p>
-        </Card>
-      </main>
-    )
-  }
-
-  if (!rows) {
-    return (
-      <main className="mx-auto max-w-4xl p-6">
-        <p>Loading…</p>
-      </main>
-    )
-  }
-
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Recent Attempts</h1>
-        <div className="flex gap-2">
-          <Link href="/practice">
-            <Button>Practice</Button>
-          </Link>
-          <Link href="/set">
-            <Button variant="secondary">Set</Button>
-          </Link>
-        </div>
-      </header>
+      <h1 className="text-2xl font-bold">Recent attempts</h1>
 
-      <Card className="p-0">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left dark:bg-gray-900">
-              <tr>
-                <th className="px-4 py-2">ID</th>
-                <th className="px-4 py-2">Created</th>
-                <th className="px-4 py-2">Score</th>
-                <th className="px-4 py-2">Duration (ms)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
+      <Card className="p-4">
+        {loading ? (
+          <p>Loading…</p>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : items.length === 0 ? (
+          <p className="text-muted-foreground">No attempts yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-muted/50 text-muted-foreground">
                 <tr>
-                  <td className="px-4 py-3" colSpan={4}>
-                    No attempts yet.
-                  </td>
+                  <th className="px-3 py-2 text-left">ID</th>
+                  <th className="px-3 py-2 text-left">Created</th>
+                  <th className="px-3 py-2 text-left">Score</th>
+                  <th className="px-3 py-2 text-left">Duration</th>
+                  <th className="px-3 py-2 text-left" />
                 </tr>
-              ) : (
-                rows.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="px-4 py-3 font-mono">
-                      <Link
-                        href={`/attempts/${r.id}`}
-                        className="underline underline-offset-2 hover:opacity-80"
-                      >
-                        {r.id}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">{r.created_at ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      {r.correct}/{r.total}
-                    </td>
-                    <td className="px-4 py-3">
-                      {typeof r.duration_ms === 'number' ? r.duration_ms : '—'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((row) => {
+                  const created = row.created_at ? new Date(row.created_at).toLocaleString() : '—'
+                  const score = `${row.correct}/${row.total}`
+                  const duration =
+                    typeof row.duration_ms === 'number' ? `${row.duration_ms} ms` : '—'
+
+                  return (
+                    <tr key={row.id} className="border-b">
+                      <td className="px-3 py-2">
+                        <Link className="underline" href={`/attempts/${row.id}`}>
+                          {row.id}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2">{created}</td>
+                      <td className="px-3 py-2">{score}</td>
+                      <td className="px-3 py-2">{duration}</td>
+                      <td className="px-3 py-2">
+                        <Link href={`/attempts/${row.id}`}>
+                          <Button>View</Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </main>
   )

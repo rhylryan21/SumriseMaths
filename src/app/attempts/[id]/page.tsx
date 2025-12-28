@@ -15,11 +15,7 @@ const API_KEY = process.env.NEXT_PUBLIC_GRADING_API_KEY ?? ''
 async function fetchAttempt(id: number, signal?: AbortSignal): Promise<AttemptOut> {
   const res = await fetch(`${API_URL}/attempts/${id}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
-    cache: 'no-store',
+    headers: API_KEY ? { 'x-api-key': API_KEY } : undefined,
     signal,
   })
   if (!res.ok) {
@@ -27,6 +23,23 @@ async function fetchAttempt(id: number, signal?: AbortSignal): Promise<AttemptOu
     throw new Error(text || `Failed to fetch attempt ${id} (${res.status})`)
   }
   return (await res.json()) as AttemptOut
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function formatDateTime(input: string | null | undefined): string {
+  if (!input) return '—'
+  const d = new Date(input)
+  if (Number.isNaN(d.getTime())) return String(input)
+  const dd = pad2(d.getDate())
+  const mm = pad2(d.getMonth() + 1)
+  const yyyy = d.getFullYear()
+  const hh = pad2(d.getHours())
+  const mi = pad2(d.getMinutes())
+  const ss = pad2(d.getSeconds())
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`
 }
 
 export default function AttemptDetailPage() {
@@ -111,7 +124,7 @@ export default function AttemptDetailPage() {
 
       <Card className="space-y-2 p-4">
         <div>
-          <span className="font-medium">Created:</span> {data.created_at ?? '—'}
+          <span className="font-medium">Created:</span> {formatDateTime(data.created_at)}
         </div>
         <div>
           <span className="font-medium">Score:</span> {data.correct}/{data.total}
